@@ -1,11 +1,14 @@
 package com.example.loadimage2
 
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
+import android.util.Log
+import android.view.*
+import androidx.core.view.MenuHost
+import androidx.core.view.MenuProvider
 import androidx.fragment.app.Fragment
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
-import androidx.lifecycle.Observer
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -33,15 +36,33 @@ class GalleryFragment : Fragment() {
             layoutManager = GridLayoutManager(requireContext(),2)
         }
         val galleryViewModel = ViewModelProvider(this,ViewModelProvider.AndroidViewModelFactory(requireActivity().application))[GalleryViewModel::class.java]
-        galleryViewModel.photoListLive.observe(viewLifecycleOwner, Observer {
+        galleryViewModel.photoListLive.observe(viewLifecycleOwner) {
             galleryAdapter.submitList(it)
             swipeLayoutGallery.isRefreshing = false
-        })
+        }
         galleryViewModel.photoListLive.value?:galleryViewModel.fetchData()
-
 
         swipeLayoutGallery.setOnRefreshListener {
             galleryViewModel.fetchData()
         }
+
+        val menuHost : MenuHost = requireActivity()
+        menuHost.addMenuProvider(object : MenuProvider {
+            override fun onCreateMenu(menu: Menu, menuInflater: MenuInflater) {
+                menuInflater.inflate(R.menu.menu,menu)
+            }
+
+            override fun onMenuItemSelected(menuItem: MenuItem): Boolean {
+                return when (menuItem.itemId) {
+                    R.id.swipeindicator -> {
+                        swipeLayoutGallery.isRefreshing = true
+                        Handler(Looper.getMainLooper()).postDelayed({ galleryViewModel.fetchData() }, 1000)
+
+                        true
+                    }
+                    else ->false
+                }
+            }
+        },viewLifecycleOwner,Lifecycle.State.RESUMED)
     }
 }

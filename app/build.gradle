@@ -1,6 +1,8 @@
 plugins {
     id 'com.android.application'
     id 'org.jetbrains.kotlin.android'
+    //增加kotlin的parcelable實現生成器
+    id("kotlin-parcelize")
 }
 
 android {
